@@ -2,7 +2,7 @@
 # @Author: Bao
 # @Date:   2021-08-18 15:07:19
 # @Last Modified by:   Bao
-# @Last Modified time: 2021-08-19 17:48:33
+# @Last Modified time: 2021-08-20 14:47:18
 
 # from onvif import ONVIFCamera
 
@@ -41,21 +41,12 @@ def do_move(ptz, request):
     ptz.RelativeMove(request)
 
 def to_left(ptz, request):
-    request.Translation.PanTilt.x = 1
-    request.Translation.PanTilt.y = 1.0
-    request.Translation.Zoom.x = 0
+    # request.Translation.PanTilt.x = -0.2
+    # request.Translation.PanTilt.y = -0.2
+    request.Speed.PanTilt.x = -0.5
+    request.Speed.PanTilt.y = -0.5
+    request.Speed.Zoom = 0.1
     do_move(ptz, request)
-
-# def move_up(ptz, request):
-#     print ('move up...')
-#     request.Position.PanTilt.x = 0.2
-#     request.Position.PanTilt.y = -1.0
-#     request.Position.Zoom.x = 0.2
-#     # request.Speed.PanTilt.x = 0
-#     # request.Speed.PanTilt.y = YMAX
-#     # request.Speed.Zoom.x = 0
-#     do_move(ptz, request)
-
 
 def setup_move():
     mycam = ONVIFCamera('172.16.0.108', 80, 'onvif', 'vnnet123456')
@@ -72,24 +63,15 @@ def setup_move():
     request = ptz.create_type('GetConfigurationOptions')
     request.ConfigurationToken = media_profile.PTZConfiguration.token
     ptz_configuration_options = ptz.GetConfigurationOptions(request)
+    # print(ptz_configuration_options)
 
     global moverequest
     moverequest = ptz.create_type('RelativeMove')
     moverequest.ProfileToken = media_profile.token
     if moverequest.Speed is None:
-        # a = ptz.GetStatus({'ProfileToken': media_profile.token})
-        # print(a)
-        moverequest.Position = ptz.GetStatus({'ProfileToken': media_profile.token}).Position
+        moverequest.Translation = {'PanTilt': {'x': -0.5, 'y': -0.5}}
+        moverequest.Speed       = ptz.GetStatus({'ProfileToken': media_profile.token}).Position
     print(moverequest)
-
-    # Get range of pan and tilt
-    # NOTE: X and Y are velocity vector
-    global XMAX, XMIN, YMAX, YMIN
-    XMAX = ptz_configuration_options.Spaces.ContinuousPanTiltVelocitySpace[0].XRange.Max
-    XMIN = ptz_configuration_options.Spaces.ContinuousPanTiltVelocitySpace[0].XRange.Min
-    YMAX = ptz_configuration_options.Spaces.ContinuousPanTiltVelocitySpace[0].YRange.Max
-    YMIN = ptz_configuration_options.Spaces.ContinuousPanTiltVelocitySpace[0].YRange.Min
-
 
 def readin():
     """Reading from stdin and displaying menu"""
@@ -103,20 +85,6 @@ def readin():
             to_left(ptz, moverequest)
         elif lov[0].lower() in ["d","do","dow","down"]:
             move_down(ptz, moverequest)
-        # elif lov[0].lower() in ["l","le","lef","left"]:
-        #     move_left(ptz,moverequest)
-        # elif lov[0].lower() in ["l","le","lef","left"]:
-        #     move_left(ptz,moverequest)
-        # elif lov[0].lower() in ["r","ri","rig","righ","right"]:
-        #     move_right(ptz,moverequest)
-        # elif lov[0].lower() in ["ul"]:
-        #     move_upleft(ptz,moverequest)
-        # elif lov[0].lower() in ["ur"]:
-        #     move_upright(ptz,moverequest)
-        # elif lov[0].lower() in ["dl"]:
-        #     move_downleft(ptz,moverequest)
-        # elif lov[0].lower() in ["dr"]:
-        #     move_downright(ptz,moverequest)
         elif lov[0].lower() in ["s","st","sto","stop"]:
             ptz.Stop({'ProfileToken': moverequest.ProfileToken})
             active = False
@@ -129,20 +97,6 @@ def readin():
             
 if __name__ == '__main__':
     setup_move()
-    # loop = asyncio.get_event_loop()
-    # try:
-    #     # loop.add_reader(sys.stdin, readin)
-    #     print("Use Ctrl-C to quit")
-    #     print("Your command: ", end='',flush=True)
-    #     # loop.run_forever()
-    # except Exception as e:
-    #     e_verbose(e)
-    #     pass
-    # finally:
-    #     # loop.remove_reader(sys.stdin)
-    #     # loop.close()
-    #     print("end")
     while True:
         readin()
 
-# numpy, appdirs, dataclasses, pytools, pyopencl
