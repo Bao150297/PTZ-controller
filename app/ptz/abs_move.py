@@ -2,7 +2,7 @@
 # @Author: Bao
 # @Date:   2021-08-18 15:07:19
 # @Last Modified by:   Bao
-# @Last Modified time: 2021-08-20 13:41:41
+# @Last Modified time: 2021-08-21 09:17:00
 
 # Now we need to perform a absolute move
 import sys
@@ -23,6 +23,7 @@ class AbsoluteMove():
         if self.moverequest.Speed is None:
             self.moverequest.Position = ptz.GetStatus({'ProfileToken': media_profile.token}).Position
 
+        print(self.moverequest)
         self.active = False
 
     def do_move(self):
@@ -32,37 +33,10 @@ class AbsoluteMove():
         self.active = True
         self.ptz.AbsoluteMove(self.moverequest)
 
-    def move_down(self):
-        print("move down...")
-        self.moverequest.Position.PanTilt.x = 1.0
-        self.moverequest.Position.PanTilt.y = -1.0
-        self.moverequest.Position.Zoom.x = 0
-        self.do_move()
-
-    def move_up(self):
-        print("move up...")
-        self.moverequest.Position.PanTilt.x = 1.0
-        self.moverequest.Position.PanTilt.y = 1.0
-        self.moverequest.Position.Zoom.x = 0
-        self.do_move()
-
-    def move_left(self):
-        print("move left")
-        self.moverequest.Position.PanTilt.x = -1
-        self.moverequest.Position.PanTilt.y = 1.0
-        self.moverequest.Position.Zoom.x = 0
-        self.do_move()
-
-    def move_right(self):
-        print("move left")
-        self.moverequest.Position.PanTilt.x = 1
-        self.moverequest.Position.PanTilt.y = 1.0
-        self.moverequest.Position.Zoom.x = 0
-        self.do_move()
-
     def custom_move(self, pan, tilt, zoom):
         print("custom absolute move")
         self.moverequest.Position.PanTilt.x = pan
         self.moverequest.Position.PanTilt.y = tilt
         self.moverequest.Position.Zoom.x = zoom
+        self.moverequest.Speed = {'PanTilt': {'x': 0.5, 'y': 0.5}, 'Zoom': 0}
         self.do_move()        

@@ -2,7 +2,7 @@
 # @Author: Bao
 # @Date:   2021-08-20 08:48:59
 # @Last Modified by:   Bao
-# @Last Modified time: 2021-08-20 13:43:36
+# @Last Modified time: 2021-08-21 09:16:43
 from flask import Flask, request, jsonify, render_template
 from app.ptz import *
 from onvif import ONVIFCamera
@@ -16,8 +16,10 @@ ptz = mycam.create_ptz_service()
 # Get target profile
 media_profile = media.GetProfiles()[0]
 
+# Movement handler instance
 con_move = ContinousMove(ptz, media_profile)
 abs_move = AbsoluteMove(ptz, media_profile)
+rel_move = RelativeMove(ptz, media_profile)
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -28,7 +30,7 @@ def index():
 
 # route http posts to this method
 @app.route('/direct', methods=['POST'])
-def verify():
+def direct():
     try:
         mtype = request.args.get("t")
         lov   = request.args.get("d")
@@ -69,8 +71,19 @@ def verify():
         data = request.get_json()
         pan  = data["pan"]
         tilt = data["tilt"]
+        # Zoom position
         zoom = data["zoom"]
         abs_move.custom_move(pan, tilt, zoom)
+        return jsonify({"message": True}), 200 # Result True or False
+    elif mtype == "rel":
+        # Relative move
+        if not request.is_json:
+            return jsonify({"message": False}), 400    
+        data = request.get_json()
+        pan  = data["pan"]
+        tilt = data["tilt"]
+        zoom = data["zoom"]
+        rel_move.custom_move(pan, tilt, zoom)
         return jsonify({"message": True}), 200 # Result True or False
     else:
         return jsonify({"message": False}), 400
