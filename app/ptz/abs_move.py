@@ -2,7 +2,7 @@
 # @Author: Bao
 # @Date:   2021-08-18 15:07:19
 # @Last Modified by:   Bao
-# @Last Modified time: 2021-08-21 09:17:00
+# @Last Modified time: 2021-08-26 10:39:33
 
 # Now we need to perform a absolute move
 import sys
@@ -23,8 +23,9 @@ class AbsoluteMove():
         if self.moverequest.Speed is None:
             self.moverequest.Position = ptz.GetStatus({'ProfileToken': media_profile.token}).Position
 
-        print(self.moverequest)
+        # print(self.moverequest)
         self.active = False
+        self.token  = media_profile.token
 
     def do_move(self):
         # Start continuous move
@@ -38,5 +39,15 @@ class AbsoluteMove():
         self.moverequest.Position.PanTilt.x = pan
         self.moverequest.Position.PanTilt.y = tilt
         self.moverequest.Position.Zoom.x = zoom
-        self.moverequest.Speed = {'PanTilt': {'x': 0.5, 'y': 0.5}, 'Zoom': 0}
+        # self.moverequest.Speed = {'PanTilt': {'x': 0.5, 'y': 0.5}, 'Zoom': 0}
         self.do_move()        
+
+    def move_to_opposite(self):
+        # Get current position
+        ptz_status = self.ptz.GetStatus({'ProfileToken': self.token})
+        self.moverequest.Position = ptz_status.Position
+        # Then use abs to get opposite :3
+        # self.moverequest.Position.PanTilt.x = 0 - self.moverequest.Position.PanTilt.x
+        self.moverequest.Position.PanTilt.y = 0 - self.moverequest.Position.PanTilt.y
+        self.moverequest.Speed = {'PanTilt': {'x': 0.1, 'y': 0.1}, 'Zoom': 0}
+        self.do_move()

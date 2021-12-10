@@ -2,7 +2,7 @@
 # @Author: Bao
 # @Date:   2021-08-21 10:44:55
 # @Last Modified by:   Bao
-# @Last Modified time: 2021-08-26 10:57:22
+# @Last Modified time: 2021-08-26 11:14:42
 
 # We will try to perform trakcing object with relative move
 import sys
@@ -33,18 +33,15 @@ def undistord(image):
     # dst = dst[y:y+h, x:x+w]
     return dst
 
-def get_red_point(index=1):
+def get_point(image):
     ''' Use color filter to get coordinate of sprinker '''
     # image = cv2.imread("sample.jpg")
-    rtsp = "rtsp://admin:vnnet123456@172.16.0.108:554/Streaming/Channels/102"
-    cap  = cv2.VideoCapture(rtsp)
-    _, image = cap.read()
 
     image = undistord(image)
-    if index == 1:
-        cv2.imwrite("undistorted.jpg", image)
-    else:
-        cv2.imwrite("undistorted_2.jpg", image)
+    # if index == 1:
+    #     cv2.imwrite("undistorted.jpg", image)
+    # else:
+    #     cv2.imwrite("undistorted_2.jpg", image)
 
     result = image.copy()
     image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -87,16 +84,16 @@ def get_red_point(index=1):
                 # if com_y2 is None or _y > com_y2:
                 com_y2 = _y
 
-    cv2.rectangle(diff, (com_x1, com_y1), (com_x2, com_y2), (255, 255, 255), 2)
+    # cv2.rectangle(diff, (com_x1, com_y1), (com_x2, com_y2), (255, 255, 255), 2)
     return_cnt = (int((com_x1 + com_x2) / 2), int((com_y1 + com_y2) / 2)) 
 
-    if index == 1:
-        cv2.imwrite("mask.png", diff)
+    # if index == 1:
+    #     cv2.imwrite("mask.png", diff)
 
     # cv2.imshow('mask', mask)
     # cv2.imshow('result', result)
     # cv2.waitKey(0)
-    cap.release()
+    # cap.release()
     # cv2.destroyAllWindows()
     return return_cnt, image.shape
 
@@ -112,83 +109,51 @@ if __name__ == '__main__':
     media_profile = media.GetProfiles()[0]
     # print(media_profile.PTZConfiguration)
 
-    # rel_move = RelativeMove(ptz, media_profile)
+    rel_move = RelativeMove(ptz, media_profile)
 
-    # start, (h_small, w_small, _) = get_red_point()
-    # print("Image size: ", w_small, "x", h_small)
-    # print("Start from: ", start)
+    rtsp = "rtsp://admin:vnnet123456@172.16.0.108:554/Streaming/Channels/102"
+    cap  = cv2.VideoCapture(rtsp)
 
-    # # Resolution of substream
-    # w_small, h_small = 640, 480
-    # # FOV
-    # h_field, v_field = 55, 33
+    h_small, w_small = 480, 640
 
-    # hd_perpx = h_field / w_small
-    # vd_perpx = v_field / h_small * 1.714285714285714
+    # FOV
+    h_field, v_field = 55, 33
 
-    # center = (320, 240)
+    hd_perpx = h_field / w_small
+    vd_perpx = v_field / h_small * 1.714285714285714
 
-    # move_p = (start[0]  - center[0]) # No problem
-    # move_t = 0 - (start[1]  - center[1])
-    # zoom   = 0
+    center = (320, 240)
 
-    # move_p *= hd_perpx
-    # move_t *= vd_perpx
-    # print("In degrees: ", move_p, ":", move_t)
+    print("Start tracking")
+    while 1:
+        ret, frame = cap.read()
+        if not ret:
+            print("Disconnected")
+            break
 
-    # move_p = math.radians(move_p) / math.pi # * 2 # That's OK 
-    # move_t = math.radians(move_t) / math.pi
-    # # move_p = np.deg2rad(move_p)
-    # # move_t = np.deg2rad(move_t)
-    # print("In radians: ", move_p, ":", move_t)
+        start, _ = get_point(frame)
+        print("Start from: ", start)
 
-    # rel_move.custom_move(move_p, move_t, zoom)
-    ###################
+        move_p = (start[0]  - center[0]) # No problem
+        move_t = 0 - (start[1]  - center[1])
+        zoom   = 0
 
-    # w = w_small
-    # h = h_small
-    # x, y = destination
+        move_p *= hd_perpx
+        move_t *= vd_perpx
 
-    # # Camera FOV.
-    # fovx = 55
-    # fovy = 33
+        # We assume ptz speed is 80 degrees per sec
+        delay_time = (abs(move_p) + abs(move_t)) / 80 + 0.2 # 0.2s is time for sending request, device delay in perfoming move
 
-    # # Camera current pan & tilt.
-    # pan  = 0
-    # tilt = 0
+        print("In degrees: ", move_p, ":", move_t)
 
-    # # 3D TO 2D
-    # # Convert to 3D local coords.
-    # lx = (2 * x / w - 1) * tan(fovx / 2)
-    # ly = (-2 * y / h + 1) * tan(fovy / 2)
-    # lz = 1
+        move_p = math.radians(move_p) / math.pi # * 2 # That's OK 
+        move_t = math.radians(move_t) / math.pi
 
-    # # Transform ray.
-    # tx = cos(pan) * cos(tilt) * lx - cos(tilt) * sin(pan) * ly - sin(tilt) * lz
-    # ty = sin(pan)             * lx + cos(pan)             * ly
-    # tz = cos(pan) * sin(tilt) * lx - sin(pan) * sin(tilt) * ly + cos(tilt) * lz
+        print("In radians: ", move_p, ":", move_t)
 
-    # # New pan & tilt to center object.
-    # tilt = atan2(tz, tx)
-    # pan  = asin(ty / sqrt((tx**2) + (ty**2) + (tz**2)))
-    # print(tilt, pan)
-    # rel_move.custom_move(pan, tilt, 0)
-    ################### 
+        rel_move.custom_move(move_p, move_t, zoom)
 
-    #### Maybe we can change speed ####
-    speed_changer = SpeedChanger(ptz, media_profile)
-    speed_changer.change_speed(0.01, 0.01, 0.3)
+        # time.sleep(delay_time)
+        time.sleep(2)
 
-    # time.sleep(0.5)
-    abs_move = AbsoluteMove(ptz, media_profile)
-    # abs_move.custom_move(1, 1, 0)
-    abs_move.move_to_opposite()
-    # time.sleep(10)
-    # abs_move.ptz.Stop({'ProfileToken': con_move.moverequest.ProfileToken})
-    # print("Stopped!")
-
-    ###################################
-
-    # time.sleep(2)
-    # new_pts, _ = get_red_point(index=2)
-    # print("After move: ", new_pts)
+    cap.release()

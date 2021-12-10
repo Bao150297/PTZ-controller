@@ -1,164 +1,129 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>PTZ controller</title>
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-	<style type="text/css">
-		.direct {
-			position: relative;
-			background-color: #04AA6D;
-			border: none;
-			color: #FFFFFF;
-			padding: 20px;
-			text-align: center;
-			-webkit-transition-duration: 0.4s; /* Safari */
-			transition-duration: 0.4s;
-			text-decoration: none;
-			overflow: hidden;
-			cursor: pointer;
-			outline: none;
-			padding: 5%;
-			margin: 0.5%;
-		}
-		.direct:focus {
-			outline: none;
-			box-shadow: none;
-		}
-		.direct:after {
-			content: "";
-			background: #90EE90;
-			display: block;
-			position: absolute;
-			padding-top: 300%;
-			padding-left: 350%;
-			margin-left: -20px!important;
-			margin-top: -120%;
-			opacity: 0;
-			transition: all 0.8s; 
-			outline: none;
-		}
-
-		.direct:active:after {
-			padding: 0;
-			margin: 0;
-			opacity: 1;
-			transition: 0s
-		}
-	</style>
+    <title>PTZ controller</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link href="{{ url_for('static', filename='css/style.css')}}" rel="stylesheet">
+    <link href="http://vjs.zencdn.net/6.2.8/video-js.css" rel="stylesheet">
 </head>
 <body>
-	<div class="row">
-		<div class="card col-3 offset-1">
-			<div class="card-header font-weight-bold">
-				Continous move
-			</div>
-			<div class="card-body row">
-				<div class="col-12 d-flex justify-content-center">
-					<button style="width: 100px; height: 100px;" class="direct" data-name="ul">Up left</button>
-					<button style="width: 100px; height: 100px;" class="direct" data-name="up">Up</button>
-					<button style="width: 100px; height: 100px;" class="direct" data-name="ur">Up right</button>
-				</div>
-				<div class="col-12 d-flex justify-content-center">
-					<button style="width: 100px; height: 100px;" class="direct" data-name="left">Left</button>
-					<button style="width: 100px; height: 100px;" class="border-0 direct" data-name="stop">Stop</button>
-					<button style="width: 100px; height: 100px;" class="direct" data-name="right">Right</button>
-				</div>
-				<div class="col-12 d-flex justify-content-center">
-					<button style="width: 100px; height: 100px;" class="direct" data-name="dl">Down left</button>
-					<button style="width: 100px; height: 100px;" class="direct" data-name="down">Down</button>
-					<button style="width: 100px; height: 100px;" class="direct" data-name="dr">Down right</button>
-				</div>
-			</div>
-		</div>	
-		<div class="card offset-4 col-3 mt-5">
-			<img class="w-100" src="{{ url_for('static', filename='images/mapping-the-angles.png')}}">
-		</div>	
-		<div class="card col-3 offset-1">
-			<div class="card-header font-weight-bold">
-				Absolute move
-			</div>
-			<div class="card-body">
-				<div class="form-group mb-2 d-flex flex-column">
-					<label for="r1">Pan</label>
-					<input id="r1" type="range" name="abs_pan" class="form-range" value="0" min="-1" max="1" step="0.1">
-				</div>
-
-				<div class="form-group mb-2 d-flex flex-column">
-					<label for="r2">Tilt</label>
-					<input id="r2" type="range" name="abs_tilt" class="form-range" value="0" min="-1" max="1" step="0.1">
-				</div>
-
-				<div class="form-group mb-2 d-flex flex-column">
-					<label for="r3">Zoom_x</label>
-					<input id="r3" type="range" name="abs_zoom" class="form-range" value="0" min="0" max="1" step="0.1">
-				</div>
-
-			</div>
-			<div class="card-footer">
-				<button id="do_abs_move" class="btn btn-primary float-right" type="button">Move</button>
-			</div>
-		</div>
-		<div class="card col-3 offset-1">
-			<div class="card-header font-weight-bold">
-				Relative move
-			</div>
-			<div class="card-body">
-				<div class="form-group mb-2 d-flex flex-column">
-					<label for="_r1">Pan</label>
-					<input id="_r1" type="range" name="rel_pan" class="form-range" value="0" min="-1" max="1" step="0.1">
-				</div>
-
-				<div class="form-group mb-2 d-flex flex-column">
-					<label for="_r2">Tilt</label>
-					<input id="_r2" type="range" name="rel_tilt" class="form-range" value="0" min="-1" max="1" step="0.1">
-				</div>
-
-				<div class="form-group mb-2 d-flex flex-column">
-					<label for="_r3">Zoom</label>
-					<input id="_r3" type="range" name="rel_zoom" class="form-range" value="0" min="-1" max="1" step="0.1">
-				</div>
-			</div>
-			<div class="card-footer">
-				<button id="do_rel_move" class="btn btn-primary float-right" type="button">Move</button>
-			</div>
-		</div>
-	</div>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
-	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-	<script type="text/javascript">
-		$(document).ready(() => {
-			// Request cotinouse move
-			$(".direct").each((index, ele) => {
-				$(ele).off().on("click", (e) => {
-					var direction = $(ele).data("name")
-					axios.post(`/direct?d=${direction}&t=con`)
-				})
-			})
-			// Request absolute move
-			$("#do_abs_move").off().on("click", () => {
-				var abs_pan  = $("input[name='abs_pan']").val()
-				var abs_tilt = $("input[name='abs_tilt']").val()
-				var abs_zoom = $("input[name='abs_zoom']").val()
-				axios.post(`/direct?t=abs`, 
-					data={pan: abs_pan, tilt: abs_tilt, zoom: abs_zoom},
-					{headers: 
-						{'Content-Type': 'application/json'}
-					})
-			})
-			// Request relative move
-			$("#do_rel_move").off().on("click", () => {
-				var rel_pan  = $("input[name='rel_pan']").val()
-				var rel_tilt = $("input[name='rel_tilt']").val()
-				var rel_zoom = $("input[name='rel_zoom']").val()
-				axios.post(`/direct?t=rel`, 
-					data={pan: rel_pan, tilt: rel_tilt, zoom: rel_zoom},
-					{headers: 
-						{'Content-Type': 'application/json'}
-					})
-			})
-		})
-	</script>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-9">
+                <div id="vid-container" class="position-relative p-0 ml-3 mt-3">
+                    <video id="player" class="video-js vjs-default-skin vjs-big-play-centered"
+                    data-setup='{"fluid": true, "controls": false, "autoplay": true, "preload": "auto"}' muted="muted">
+                        <source src="/video/index.m3u8" type="application/x-mpegURL">
+                    </video>
+                    <canvas id="point-loc" class="border border-primary"></canvas>
+                </div>
+            </div>
+            <div class="col-3 d-flex flex-column justify-content-between">
+                <!-- Illustration -->
+                <div class="w-100 mt-3 mb-3">
+                    <div class="card-header">
+                        How PTZ work?
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <img class="w-100" src="{{ url_for('static', filename='images/mapping-the-angles.png')}}">
+                        </div>
+                    </div>
+                </div>
+                <!-- End -->
+                <div class="w-100">
+                    <div class="card">
+                        <div class="card-header text-green">
+                            Choose moving type
+                        </div>
+                        <div class="card-body p-0">
+                            <select id="select_move" class="form-control" name="select_move">
+                                <option value="con_move">Continouse move</option>
+                                <option value="abs_move">Absolute move</option>
+                                <option value="rel_move">Relative move</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- Continous move -->
+                <div class="w-100 move-div" data-move="con_move">
+                    <div class="card">
+                        <div class="card-body row">
+                            <div class="col-12 d-flex justify-content-center">
+                                <button style="width: 5rem; height: 5rem;" class="direct" data-name="ul">Up left</button>
+                                <button style="width: 5rem; height: 5rem;" class="direct" data-name="up">Up</button>
+                                <button style="width: 5rem; height: 5rem;" class="direct" data-name="ur">Up right</button>
+                            </div>
+                            <div class="col-12 d-flex justify-content-center">
+                                <button style="width: 5rem; height: 5rem;" class="direct" data-name="left">Left</button>
+                                <button style="width: 5rem; height: 5rem;" class="border-0 direct" data-name="stop">Stop</button>
+                                <button style="width: 5rem; height: 5rem;" class="direct" data-name="right">Right</button>
+                            </div>
+                            <div class="col-12 d-flex justify-content-center">
+                                <button style="width: 5rem; height: 5rem;" class="direct" data-name="dl">Down left</button>
+                                <button style="width: 5rem; height: 5rem;" class="direct" data-name="down">Down</button>
+                                <button style="width: 5rem; height: 5rem;" class="direct" data-name="dr">Down right</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End -->
+                <!-- Absolute move card -->
+                <div class="w-100 move-div d-none" data-move="abs_move">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-group mb-2 d-flex flex-column">
+                                <label for="r1">Pan</label>
+                                <input id="r1" type="range" name="abs_pan" class="form-range" value="0" min="-1" max="1" step="0.1">
+                            </div>
+                            <div class="form-group mb-2 d-flex flex-column">
+                                <label for="r2">Tilt</label>
+                                <input id="r2" type="range" name="abs_tilt" class="form-range" value="0" min="-1" max="1" step="0.1">
+                            </div>
+                            <div class="form-group mb-2 d-flex flex-column">
+                                <label for="r3">Zoom_x</label>
+                                <input id="r3" type="range" name="abs_zoom" class="form-range" value="0" min="0" max="1" step="0.1">
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button id="do_abs_move" class="btn btn-primary float-right" type="button">Move</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- End -->
+                <!-- Relative move card -->
+                <div class="w-100 move-div d-none" data-move="rel_move">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-group mb-2 d-flex flex-column">
+                                <label for="_r1">Pan</label>
+                                <input id="_r1" type="range" name="rel_pan" class="form-range" value="0" min="-1" max="1" step="0.1">
+                            </div>
+                            <div class="form-group mb-2 d-flex flex-column">
+                                <label for="_r2">Tilt</label>
+                                <input id="_r2" type="range" name="rel_tilt" class="form-range" value="0" min="-1" max="1" step="0.1">
+                            </div>
+                            <div class="form-group mb-2 d-flex flex-column">
+                                <label for="_r3">Zoom</label>
+                                <input id="_r3" type="range" name="rel_zoom" class="form-range" value="0" min="-1" max="1" step="0.1">
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button id="do_rel_move" class="btn btn-primary float-right" type="button">Move</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- End -->
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script src="http://vjs.zencdn.net/6.2.8/video.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.12.2/videojs-contrib-hls.min.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/sweetalert2.all.min.js') }}" ></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/index.js')}}"></script>
 </body>
 </html>

@@ -1,1 +1,6 @@
 __pycache__/
+app/ptz/camera-calibration-and-image-undistortion/*
+app/static/hls
+*.png
+*.jpg
+*.npz

@@ -3,7 +3,13 @@
 # @Date:   2021-08-20 08:48:59
 # @Last Modified by:   Bao
 # @Last Modified time: 2021-08-21 09:16:43
-from flask import Flask, request, jsonify, render_template
+import os
+import sys
+from flask import (Flask,
+                   request,
+                   jsonify,
+                   render_template,
+                   send_from_directory)
 from app.ptz import *
 from onvif import ONVIFCamera
 
@@ -23,6 +29,26 @@ rel_move = RelativeMove(ptz, media_profile)
 
 # Initialize the Flask application
 app = Flask(__name__)
+
+''' For video streaming via HLS '''
+@app.after_request
+def add_header(response):
+    response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+# FIXME: common path for m3u8 file and ts file
+@app.route('/video/<string:file_name>')
+def stream(file_name):
+    root_dir = os.getcwd()
+    return send_from_directory(os.path.join(root_dir, 'app', 'static', 'hls'), file_name, as_attachment=True)
+
+@app.route('/video/app/static/hls/<string:file_name>')
+def res_hls(file_name):
+    root_dir = os.getcwd()
+    return send_from_directory(os.path.join(root_dir, 'app', 'static', 'hls'), file_name, as_attachment=True)
 
 @app.route('/', methods=['GET'])
 def index():
@@ -84,6 +110,14 @@ def direct():
         tilt = data["tilt"]
         zoom = data["zoom"]
         rel_move.custom_move(pan, tilt, zoom)
+        return jsonify({"message": True}), 200 # Result True or False
+    elif mtype == "rel_c":
+        # Relative move with pre-defined point
+        if not request.is_json:
+            return jsonify({"message": False}), 400
+        data = request.get_json()
+        x, y = data["x"], data["y"]
+        rel_move.point_move(x, y)
         return jsonify({"message": True}), 200 # Result True or False
     else:
         return jsonify({"message": False}), 400
