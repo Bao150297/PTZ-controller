@@ -3,12 +3,17 @@
 # @Date:   2021-08-20 09:21:34
 # @Last Modified by:   Bao
 # @Last Modified time: 2021-08-20 09:58:58
+import json
 import subprocess as sp
 from app import app
 
 # start flask app
 if __name__ == '__main__':
-    rtsp_str = "rtsp://admin:vnnet123456@172.16.0.108:554/Streaming/Channels/101"
+
+    with open("config.json", "r") as f:
+        config = json.load(f)
+
+    rtsp_str = config["rtsp_link"]
     # Init FFMPEG player to convert RTSP stream to HLS
     # https://girishjoshi.io/post/ffmpeg-rtsp-to-hls/
     hls_dir = "app/static/hls/"
@@ -21,7 +26,6 @@ if __name__ == '__main__':
                '-movflags', 'frag_keyframe+empty_moov',
                '-an',
                '-hls_flags', 'delete_segments+append_list',
-               '-hls_list_size', '20',
                '-f', 'segment',
                '-reset_timestamps', '1',
                '-segment_wrap', '60',

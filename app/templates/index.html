@@ -7,31 +7,60 @@
     <link href="http://vjs.zencdn.net/6.2.8/video-js.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container-fluid">
+    <div class="container">
         <div class="row">
-            <div class="col-9">
-                <div id="vid-container" class="position-relative p-0 ml-3 mt-3">
+            <div class="col-8 mt-3">
+                <div id="vid-container" style="position: relative; width: 600px; height: 450px;">
                     <video id="player" class="video-js vjs-default-skin vjs-big-play-centered"
-                    data-setup='{"fluid": true, "controls": false, "autoplay": true, "preload": "auto"}' muted="muted">
+                    data-setup='{"fluid": true, "controls": false, "autoplay": true, "preload": "auto", "aspectRatio": "4:3"}' muted="muted">
                         <source src="/video/index.m3u8" type="application/x-mpegURL">
                     </video>
-                    <canvas id="point-loc" class="border border-primary"></canvas>
+                </div>
+                <!-- Previous PTZ position -->
+                <div class="row">
+                    <div class="col-6">
+                        <div class="card-header d-flex text-center align-items-center">
+                            <span>Previous PTZ position</span>
+                            <button id="back_prv" type="button" class="btn btn-primary m-auto" style="border-radius: 0 !important;">Back</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="btn-group d-flex justify-content-between">
+                                <button id="pre_p" type="button" class="btn text-left" disabled>P: N/A</button>
+                                <button id="pre_t" type="button" class="btn text-left" disabled>T: N/A</button>
+                                <button id="pre_z" type="button" class="btn text-left" disabled>Z: N/A</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End -->
+                    <!-- Current PTZ position -->
+                    <div class="col-6">
+                        <div class="card-header">
+                            <span>Current PTZ position</span>
+                            <button type="button" class="btn m-auto" disabled style="visibility: hidden;">Go</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="btn-group d-flex justify-content-between">
+                                <button id="cur_p" type="button" class="btn text-left" disabled>P: </button>
+                                <button id="cur_t" type="button" class="btn text-left" disabled>T: </button>
+                                <button id="cur_z" type="button" class="btn text-left" disabled>Z: </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-3 d-flex flex-column justify-content-between">
+            <div class="col-4 mt-3 p-1 d-flex flex-column justify-content-between">
                 <!-- Illustration -->
-                <div class="w-100 mt-3 mb-3">
-                    <div class="card-header">
-                        How PTZ work?
-                    </div>
+                <div class="w-100 mb-2">
                     <div class="card">
+                        <div class="card-header">
+                            How PTZ work?
+                        </div>
                         <div class="card-body">
                             <img class="w-100" src="{{ url_for('static', filename='images/mapping-the-angles.png')}}">
                         </div>
                     </div>
                 </div>
-                <!-- End -->
-                <div class="w-100">
+                <div class="w-100 mb-2">
                     <div class="card">
                         <div class="card-header text-green">
                             Choose moving type
@@ -113,6 +142,7 @@
                         </div>
                     </div>
                 </div>
+                <!-- End -->
                 <!-- End -->
             </div>
         </div>

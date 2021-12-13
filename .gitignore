@@ -4,3 +4,4 @@ app/static/hls
 *.png
 *.jpg
 *.npz
+config.json

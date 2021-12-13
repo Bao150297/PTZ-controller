@@ -50,17 +50,3 @@ class ImagingSetup():
     def get_current_stt(self):
         request = self.media.GetVideoSources()
         print(request)
-
-if __name__ == '__main__':
-
-    mycam = ONVIFCamera('172.16.0.108', 80, 'onvif', 'vnnet123456')
-    # Create media service object
-    media = mycam.create_media_service()
-    # Create ptz service object
-    imaging = mycam.create_imaging_service()
-
-    img_setup = ImagingSetup(imaging, media)
-    img_setup.adjust_focus()
-    img_setup.adjust_brightness()
-    time.sleep(2)
-    img_setup.get_current_stt()

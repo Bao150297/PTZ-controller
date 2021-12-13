@@ -54,7 +54,6 @@ def get_point(image):
     lower = np.array([36, 25, 25])
     upper = np.array([70, 255, 255])
 
-
     mask = cv2.inRange(image, lower, upper)
 
     diff = cv2.bitwise_and(result, result, mask=mask)

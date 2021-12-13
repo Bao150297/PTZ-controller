@@ -45,6 +45,19 @@ class RelativeMove():
         self.h_pov = 55 / 640
         self.v_pov = 33 / 480 * 1.714285714285714
 
+    def get_cur_position(self):
+        ''' Get current location in PanTilt
+            http://www.onvif.org/onvif/ver20/ptz/wsdl/ptz.wsdl#op.RelativeMove
+        Args:
+            - pan, tilt, zoom: movement postition value
+        '''
+        current_location = dict({'p': 0, 't': 0, 'z': 0})
+        ptz_status = self.ptz.GetStatus({'ProfileToken': self.moverequest.ProfileToken}).Position
+        current_location['p'] = ptz_status.PanTilt.x
+        current_location['t'] = ptz_status.PanTilt.y
+        current_location['z'] = ptz_status.Zoom.x
+        return current_location
+
     def do_move(self):
         # Start continuous move
         if self.active:
@@ -67,14 +80,14 @@ class RelativeMove():
 
         x, y = out_point[0][0]
 
-        move_p = (x  - 320) # No problem
-        move_t = 0 - (y  - 240)
+        move_p = x  - 320 # No problem
+        move_t = - (y  - 240)
 
         move_p *= self.h_pov
         move_t *= self.v_pov
 
-        move_p = math.radians(move_p)
-        move_t = math.radians(move_t)
+        move_p = math.radians(move_p) / 2.3
+        move_t = math.radians(move_t) / math.pi
 
         logging.info("Move params: %s - %.2f - %.2f - %.2f - %.2f" %(str(in_point), x, y, move_p, move_t))
 
@@ -100,7 +113,6 @@ class SpeedChanger():
         self.token  = media_profile.token
 
     def change_speed(self, value_p, value_t, value_z):
-        # print("change ptz speed")
         self.moverequest.PTZConfiguration.DefaultPTZSpeed = {'PanTilt': {'x': value_p, 'y': value_t}, 'Zoom': {'x': value_z}}
         # print(self.moverequest)
         self.ptz.SetConfiguration(self.moverequest)

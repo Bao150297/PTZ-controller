@@ -1,5 +1,14 @@
 $(document).ready(() => {
-    var player = videojs('player', {width: 350, height: 200})
+
+    axios.get('/get_loc')
+    .then(function(response){
+        var coor = response.data
+        $("#cur_p").html(`P: ${coor.p.toFixed(8)}`)
+        $("#cur_t").html(`T: ${coor.t.toFixed(8)}`)
+        $("#cur_z").html(`Z: ${coor.z.toFixed(8)}`)
+    })
+
+    var player = videojs('player')
     player.play()
 
     // Event handle for select tag
@@ -74,7 +83,6 @@ $(document).ready(() => {
             $styledSelect.removeClass('active')
             $list.hide()
         })
-
     })
 
     // Request cotinouse move
@@ -82,8 +90,14 @@ $(document).ready(() => {
         $(ele).off().on("click", (e) => {
             var direction = $(ele).data("name")
             axios.post(`/direct?d=${direction}&t=con`)
+            .then(function(response){
+                if(direction == 'stop')
+                    store_cur_ptz()
+            })
         })
     })
+
+
     // Request absolute move
     $("#do_abs_move").off().on("click", () => {
         var abs_pan  = $("input[name='abs_pan']").val()
@@ -94,6 +108,9 @@ $(document).ready(() => {
             {headers:
                 {'Content-Type': 'application/json'}
             })
+        .then(function (response) {
+            store_cur_ptz()
+        })
     })
     // Request relative move
     $("#do_rel_move").off().on("click", () => {
@@ -105,6 +122,48 @@ $(document).ready(() => {
             {headers:
                 {'Content-Type': 'application/json'}
             })
+        .then(function(response){
+            store_cur_ptz()
+        })
+    })
+
+    function store_cur_ptz(){
+        // Values from current PTZ position will be accquire to previous
+        var pre_p = parseFloat($("#cur_p").html().split(":")[1]).toFixed(8)
+        var pre_t = parseFloat($("#cur_t").html().split(":")[1]).toFixed(8)
+        var pre_z = parseFloat($("#cur_z").html().split(":")[1]).toFixed(8)
+
+        // Change display
+        $("#pre_p").html(`P: ${pre_p}`)
+        $("#pre_t").html(`T: ${pre_t}`)
+        $("#pre_z").html(`Z: ${pre_z}`)
+
+        // Update current PTZ position
+        setTimeout(function(){
+            axios.get('/get_loc')
+            .then(function(response){
+                var coor = response.data
+                $("#cur_p").html(`P: ${coor.p.toFixed(8)}`)
+                $("#cur_t").html(`T: ${coor.t.toFixed(8)}`)
+                $("#cur_z").html(`Z: ${coor.z.toFixed(8)}`)
+            })
+        }, 5000)
+    }
+
+    $("#back_prv").off().on("click", function(e){
+        e.preventDefault()
+        var pre_p = parseFloat($("#pre_p").html().split(":")[1])
+        var pre_t = parseFloat($("#pre_t").html().split(":")[1])
+        var pre_z = parseFloat($("#pre_z").html().split(":")[1])
+
+        axios.post(`/direct?t=abs`,
+            data={pan: pre_p, tilt: pre_t, zoom: pre_z},
+            {headers:
+                {'Content-Type': 'application/json'}
+            })
+        .then(function(response){
+            store_cur_ptz()
+        })
     })
 
     // Re-useable sweet alert boxes
@@ -139,46 +198,68 @@ $(document).ready(() => {
 
     // Init canvas for point-click-move function
     var ctx = null
-    var canvas = document.getElementById("point-loc")
+    var canvas = null
+    var canvas_w = 0, canvas_h = 0
     function init(){
-        canvas.setAttribute('style', `width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 2;`)
+        var canvas = document.createElement('canvas')
+        canvas.setAttribute('style', `width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 4;border: 2px solid #206bc4;`)
+        canvas.setAttribute('id', 'point-loc')
         if(typeof G_vmlCanvasManager != 'undefined') {
             canvas = G_vmlCanvasManager.initElement(canvas)
         }
-        ctx = canvas.getContext("2d")
         showLoading("Getting ready...", 600)
+        var canvasDiv = document.getElementById("vid-container")
         setTimeout(()=>{
-            canvas.setAttribute('width', $("#vid-container").offsetWidth)
-            canvas.setAttribute('height', $("#vid-container").offsetHeight)
+            canvas.setAttribute('height', $(canvasDiv).outerHeight())
+            canvas.setAttribute('width', $(canvasDiv).outerWidth())
+            canvas_w = canvas.scrollWidth
+            canvas_h = canvas.scrollHeight
+            ctx = canvas.getContext("2d")
         }, 600)
+        canvasDiv.appendChild(canvas)
+        canvas.addEventListener("click", point_loc)
+
+        setTimeout(()=>{
+            var hr = document.createElement('hr')
+            hr.setAttribute('style', `width: 100%; height: 1px; position: absolute; top: ${canvas_h / 2}px; left: 0; z-index: 2;background-color:red;border:none`)
+            hr.classList.add('m-0')
+            canvasDiv.appendChild(hr)
+
+            var hr2 = document.createElement('hr')
+            hr2.setAttribute('style', `width: 1px; height: 100%; position: absolute; top: 0; left: ${canvas_w / 2}px; z-index: 3;background-color:red;border:none`)
+            hr2.classList.add('m-0')
+            canvasDiv.appendChild(hr2)
+
+        }, 1000)
     }
+
 
     init()
 
     // Get location when click on canvas
-    var guessX = 0; //stores user's click on canvas
-    var guessY = 0; //stores user's click on canvas
-    function point_loc(event) {
-        var x = event.offsetX
-        var y = event.offsetY
-        guessX = x
-        guessY = y
-        var scale_x = 640 / canvas.width
-        var scale_y = 360 / canvas.height
+    function point_loc(e) {
+        var offset = $(this).offset()
+        var x = parseInt(e.pageX - offset.left)
+        var y = parseInt(e.pageY - offset.top)
 
-        x /= scale_x
-        y /= scale_y
+        var scale_x = 640 / canvas_w
+        var scale_y = 480 / canvas_h
 
-        console.log('x', x, 'y', y)
+        x *= scale_x
+        y *= scale_y
+
+        console.log('scale_x', scale_x, 'scale_y', scale_y, 'x', x, 'y', y)
 
         axios.post(`/direct?t=rel_c`,
             data = {x: x, y: y},
             {headers:
                 {'Content-Type': 'application/json'}
             })
+        .then(function(response){
+            store_cur_ptz()
+        })
     }
 
-    canvas.addEventListener("click", point_loc)
 
     function get_point_loc(canvas, event) {
         var x, y

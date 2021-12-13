@@ -121,3 +121,8 @@ def direct():
         return jsonify({"message": True}), 200 # Result True or False
     else:
         return jsonify({"message": False}), 400
+
+@app.route('/get_loc')
+def get_ptz_position():
+    position = rel_move.get_cur_position()
+    return jsonify(position), 200
