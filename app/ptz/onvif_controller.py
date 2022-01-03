@@ -8,19 +8,21 @@ class CameraControl:
     Module for control cameras AXIS using Onvif
     """
 
-    def __init__(self, ip, user, password):
+    def __init__(self, ip, user, password, calibrate=False):
         self.__cam_ip = ip
         self.__cam_user = user
         self.__cam_password = password
 
+        self.calibrate = calibrate
         # For undistord point
-        parameters = np.load("app/ptz/parameters.npz")
-        self.mtx   = parameters["mtx"]
-        self.dist  = parameters["dist"]
-        self.rvecs = parameters["rvecs"]
-        self.tvecs = parameters["tvecs"]
+        if calibrate:
+            parameters = np.load("app/ptz/parameters.npz")
+            self.mtx   = parameters["mtx"]
+            self.dist  = parameters["dist"]
+            self.rvecs = parameters["rvecs"]
+            self.tvecs = parameters["tvecs"]
 
-        self.newcameramtx, _ = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, (640, 480), 1, (640, 480))
+            self.newcameramtx, _ = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, (640, 480), 1, (640, 480))
 
         self.h_pov = 55 / 180 / 640
         self.v_pov = 33 / 105 / 480
@@ -134,10 +136,10 @@ class CameraControl:
 
     def point_move(self, x, y):
         """ Provide x, y coordinate on image, center image to this point """
-        in_point = np.expand_dims(np.asarray((x, y), dtype=np.float32), axis=0)
-        out_point = cv2.undistortPoints(in_point, self.mtx, self.dist, P=self.newcameramtx)
-
-        x, y = out_point[0][0]
+        if self.calibrate:
+            in_point = np.expand_dims(np.asarray((x, y), dtype=np.float32), axis=0)
+            out_point = cv2.undistortPoints(in_point, self.mtx, self.dist, P=self.newcameramtx)
+            x, y = out_point[0][0]
 
         move_p = x  - 320 # No problem
         move_t = - (y  - 240)
@@ -227,16 +229,16 @@ class CameraControl:
         request = self.camera_ptz.create_type('SetPreset')
         request.ProfileToken = self.camera_media_profile.token
         request.PresetName = preset_name
-        print('camera_command( set_preset%s) )', preset_name)
+        print('camera_command( set_preset%s) )' %preset_name)
 
         for i, _ in enumerate(presets):
             if str(presets[i].Name) == preset_name:
                 print(
-                    'Preset (\'%s\') not created. Preset already exists!', preset_name)
+                    'Preset (\'%s\') not created. Preset already exists!' %preset_name)
                 return None
 
         ptz_set_preset = self.camera_ptz.SetPreset(request)
-        print('Preset (\'%s\') created!', preset_name)
+        print('Preset (\'%s\') created!' %preset_name)
         return ptz_set_preset
 
     def get_preset(self):
@@ -284,9 +286,9 @@ class CameraControl:
             if str(presets[i].Name) == preset_name:
                 request.PresetToken = presets[i].token
                 ptz_remove_preset = self.camera_ptz.RemovePreset(request)
-                print('Preset (\'%s\') removed!', preset_name)
+                print('Preset (\'%s\') removed!' %preset_name)
                 return ptz_remove_preset
-        print("Preset (\'%s\') not found!", preset_name)
+        print("Preset (\'%s\') not found!" %preset_name)
         return None
 
     def go_to_preset(self, preset_position: str):
@@ -308,7 +310,7 @@ class CameraControl:
             if str1 == preset_position:
                 request.PresetToken = presets[i].token
                 resp = self.camera_ptz.GotoPreset(request)
-                print("Goes to (\'%s\')", preset_position)
+                print("Goes to (\'%s\')" %preset_position)
                 return resp
         print("Preset (\'%s\') not found!", preset_position)
         return None

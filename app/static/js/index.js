@@ -1,5 +1,20 @@
 $(document).ready(() => {
 
+    // add preset select tag
+    for(var i=0; i<300; i++){
+        var node = `<label class="form-selectgroup-item flex-fill">
+                        <input type="checkbox" name="form-project-manager[]" value="1" class="form-selectgroup-input" >
+                        <div class="form-selectgroup-label d-flex align-items-center p-3">
+                            <div class="form-selectgroup-label-content d-flex align-items-center">
+                                <div>
+                                    <div class="font-weight-medium">Preset ${i}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </label>`
+        $("#preset-list").append(node)
+    }
+
     axios.get('/get_loc')
     .then(function(response){
         var coor = response.data
@@ -70,10 +85,14 @@ $(document).ready(() => {
             if($this.attr("name")=="select_move"){
                 var selected_move = $this.val()
                 $(".move-div").each((index, ele) => {
-                    $(ele).removeClass("d-block")
-                    $(ele).addClass("d-none")
-                    if($(ele).data("move") == selected_move)
+                    if($(ele).data("move") == selected_move){
+                        $(ele).removeClass("d-none")
                         $(ele).addClass("d-block")
+                    }
+                    else{
+                        $(ele).addClass("d-none")
+                        $(ele).removeClass("d-block")
+                    }
                 })
             }
         })

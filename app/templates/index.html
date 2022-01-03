@@ -3,6 +3,8 @@
 <head>
     <title>PTZ controller</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link href="{{ url_for('static', filename='css/demo.min.css')}}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/tabler.min.css')}}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css')}}" rel="stylesheet">
     <link href="http://vjs.zencdn.net/6.2.8/video-js.css" rel="stylesheet">
 </head>
@@ -16,14 +18,28 @@
                         <source src="/video/index.m3u8" type="application/x-mpegURL">
                     </video>
                 </div>
-                <!-- Previous PTZ position -->
-                <div class="row">
-                    <div class="col-6">
-                        <div class="card-header d-flex text-center align-items-center">
-                            <span>Previous PTZ position</span>
-                            <button id="back_prv" type="button" class="btn btn-primary m-auto" style="border-radius: 0 !important;">Back</button>
+                <div class="col-12 row mt-3" style="position: relative; width: 600px;">
+                    <!-- Current PTZ position -->
+                    <div class="col-12">
+                        <div class="pt-1 pb-1 card-header d-flex text-center align-items-center justify-content-between">
+                            <span>Current PTZ position</span>
+                            <button id="set_preset" type="button" class="btn btn-secondary" style="border-radius: 0 !important;">Save as preset</button>
                         </div>
-                        <div class="card-body">
+                        <div class="pt-1 pb-1 card-body">
+                            <div class="btn-group d-flex justify-content-between">
+                                <button id="cur_p" type="button" class="btn text-left" disabled>P: </button>
+                                <button id="cur_t" type="button" class="btn text-left" disabled>T: </button>
+                                <button id="cur_z" type="button" class="btn text-left" disabled>Z: </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Previous PTZ position -->
+                    <div class="col-12">
+                        <div class="pt-1 pb-1 card-header d-flex text-center align-items-center justify-content-between">
+                            <span>Previous PTZ position</span>
+                            <button id="back_prv" type="button" class="btn btn-primary" style="border-radius: 0 !important;">Go back</button>
+                        </div>
+                        <div class="pt-1 pb-1 card-body">
                             <div class="btn-group d-flex justify-content-between">
                                 <button id="pre_p" type="button" class="btn text-left" disabled>P: N/A</button>
                                 <button id="pre_t" type="button" class="btn text-left" disabled>T: N/A</button>
@@ -32,41 +48,37 @@
                         </div>
                     </div>
                     <!-- End -->
-                    <!-- Current PTZ position -->
-                    <div class="col-6">
-                        <div class="card-header">
-                            <span>Current PTZ position</span>
-                            <button type="button" class="btn m-auto" disabled style="visibility: hidden;">Go</button>
-                        </div>
-                        <div class="card-body">
-                            <div class="btn-group d-flex justify-content-between">
-                                <button id="cur_p" type="button" class="btn text-left" disabled>P: </button>
-                                <button id="cur_t" type="button" class="btn text-left" disabled>T: </button>
-                                <button id="cur_z" type="button" class="btn text-left" disabled>Z: </button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
-            <div class="col-4 mt-3 p-1 d-flex flex-column justify-content-between">
+            <div class="col-4 mt-3 d-flex flex-column justify-content-between">
                 <!-- Illustration -->
                 <div class="w-100 mb-2">
-                    <div class="card">
+                    <!-- <div class="card">
                         <div class="card-header">
                             How PTZ work?
                         </div>
                         <div class="card-body">
                             <img class="w-100" src="{{ url_for('static', filename='images/mapping-the-angles.png')}}">
                         </div>
+                    </div> -->
+                    <div class="card">
+                        <div class="card-header text-blue font-weight-bold">
+                            Preset list
+                        </div>
+                        <div class="card-body">
+                            <div id="preset-list" class="form-selectgroup form-selectgroup-boxes d-flex flex-column"
+                            style="max-height: 30vh;overflow-y: scroll;">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="w-100 mb-2">
                     <div class="card">
-                        <div class="card-header text-green">
+                        <div class="card-header text-blue font-weight-bold">
                             Choose moving type
                         </div>
-                        <div class="card-body p-0">
-                            <select id="select_move" class="form-control" name="select_move">
+                        <div class="card-body">
+                            <select id="select_move" class="form-select" name="select_move">
                                 <option value="con_move">Continouse move</option>
                                 <option value="abs_move">Absolute move</option>
                                 <option value="rel_move">Relative move</option>
