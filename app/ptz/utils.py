@@ -20,7 +20,8 @@ def e_verbose(e, logger=None, prefix=""):
     exc_type, _, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     msg  = prefix + ". " if prefix else ""
-    msg += "Error: \n\tType: %s\n\tFile name: %s\n\tLine number: %s\n\tContent: %s" %(exc_type, fname, str(exc_tb.tb_lineno), e)
+    msg += "Error: \n\tType: %s\n\tFile name: %s\n\tLine number: %s\n\tContent: %s" \
+            %(exc_type, fname, str(exc_tb.tb_lineno), e)
     if logger:
         logger.error(msg)
     else:

@@ -5,28 +5,19 @@
 # @Last Modified time: 2021-08-21 09:16:43
 import os
 import sys
+import json
 from flask import (Flask,
                    request,
                    jsonify,
                    render_template,
                    send_from_directory)
-from app.ptz import *
-from onvif import ONVIFCamera
+from app.ptz import CameraControl
 
-mycam = ONVIFCamera('172.16.0.108', 80, 'onvif', 'vnnet123456')
-# Create media service object
-media = mycam.create_media_service()
-# Create ptz service object
-ptz = mycam.create_ptz_service()
+with open("config.json", "r") as f:
+    data = json.load(f)
 
-# Get target profile
-media_profile = media.GetProfiles()[0]
-
-# Movement handler instance
-con_move = ContinousMove(ptz, media_profile)
-abs_move = AbsoluteMove(ptz, media_profile)
-rel_move = RelativeMove(ptz, media_profile)
-
+ptz_ctl = CameraControl(data["ip_camera"], data["onvif_id"], data["onvif_pwd"])
+ptz_ctl.camera_start()
 # Initialize the Flask application
 app = Flask(__name__)
 
@@ -65,64 +56,41 @@ def direct():
 
     if mtype == "con":
         # Continous move
-        if lov.lower() in ["u","up"]:
-            con_move.move_up()
-        elif lov.lower() in ["d","do","dow","down"]:
-            con_move.move_down()
-        elif lov.lower() in ["l","le","lef","left"]:
-            con_move.move_left()
-        elif lov.lower() in ["l","le","lef","left"]:
-            con_move.move_left()
-        elif lov.lower() in ["r","ri","rig","righ","right"]:
-            con_move.move_right()
-        elif lov.lower() in ["ul"]:
-            con_move.move_upleft()
-        elif lov.lower() in ["ur"]:
-            con_move.move_upright()
-        elif lov.lower() in ["dl"]:
-            con_move.move_downleft()
-        elif lov.lower() in ["dr"]:
-            con_move.move_downright()
-        elif lov.lower() in ["s","st","sto","stop"]:
-            con_move.ptz.Stop({'ProfileToken': con_move.moverequest.ProfileToken})
-            con_move.active = False
-        else:
-            print("What are you asking?\tI only know, 'up','down','left','right', 'ul' (up left), \n\t\t\t'ur' (up right), 'dl' (down left), 'dr' (down right) and 'stop'")
-            return jsonify({"message": False}), 400    
+        ptz_ctl.continuous_move(lov)
         return jsonify({"message": True}), 200 # Result True or False
     elif mtype == "abs":
         # Absolute move
         if not request.is_json:
-            return jsonify({"message": False}), 400    
+            return jsonify({"message": False}), 400
         data = request.get_json()
-        pan  = data["pan"]
-        tilt = data["tilt"]
+        pan  = float(data["pan"])
+        tilt = float(data["tilt"])
         # Zoom position
-        zoom = data["zoom"]
-        abs_move.custom_move(pan, tilt, zoom)
+        zoom = float(data["zoom"])
+        ptz_ctl.absolute_move(pan, tilt, zoom)
         return jsonify({"message": True}), 200 # Result True or False
     elif mtype == "rel":
         # Relative move
         if not request.is_json:
-            return jsonify({"message": False}), 400    
+            return jsonify({"message": False}), 400
         data = request.get_json()
-        pan  = data["pan"]
-        tilt = data["tilt"]
-        zoom = data["zoom"]
-        rel_move.custom_move(pan, tilt, zoom)
+        pan  = float(data["pan"])
+        tilt = float(data["tilt"])
+        zoom = float(data["zoom"])
+        ptz_ctl.relative_move(pan, tilt, zoom)
         return jsonify({"message": True}), 200 # Result True or False
     elif mtype == "rel_c":
         # Relative move with pre-defined point
         if not request.is_json:
             return jsonify({"message": False}), 400
         data = request.get_json()
-        x, y = data["x"], data["y"]
-        rel_move.point_move(x, y)
+        x, y = float(data["x"]), float(data["y"])
+        ptz_ctl.point_move(x, y)
         return jsonify({"message": True}), 200 # Result True or False
     else:
         return jsonify({"message": False}), 400
 
 @app.route('/get_loc')
 def get_ptz_position():
-    position = rel_move.get_cur_position()
+    position = ptz_ctl.get_cur_position()
     return jsonify(position), 200

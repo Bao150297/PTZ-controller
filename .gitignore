@@ -1,7 +1,9 @@
 __pycache__/
 app/ptz/camera-calibration-and-image-undistortion/*
 app/static/hls
+!app/static/hls/.gitkeep
 *.png
 *.jpg
 *.npz
 config.json
+test/*

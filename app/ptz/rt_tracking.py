@@ -98,7 +98,10 @@ def get_point(image):
 
 if __name__ == '__main__':
 
-    mycam = ONVIFCamera('172.16.0.108', 80, 'onvif', 'vnnet123456')
+    with open("../../config.json", "r") as f:
+        data = json.load(f)
+
+    mycam = ONVIFCamera(data["ip_camera"], 80, data["onvif_id"], data["onvif_pwd"])
     # Create media service object
     media = mycam.create_media_service()
     # Create ptz service object
@@ -110,7 +113,7 @@ if __name__ == '__main__':
 
     rel_move = RelativeMove(ptz, media_profile)
 
-    rtsp = "rtsp://admin:vnnet123456@172.16.0.108:554/Streaming/Channels/102"
+    rtsp = data["rtsp_link"]
     cap  = cv2.VideoCapture(rtsp)
 
     h_small, w_small = 480, 640
