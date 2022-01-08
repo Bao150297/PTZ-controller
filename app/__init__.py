@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: Bao
 # @Date:   2021-08-20 08:48:59
-# @Last Modified by:   Bao
-# @Last Modified time: 2021-08-21 09:16:43
+# @Last Modified time: 2022-01-07 14:14:30
+
 import os
 import sys
 import json
@@ -94,3 +94,31 @@ def direct():
 def get_ptz_position():
     position = ptz_ctl.get_cur_position()
     return jsonify(position), 200
+
+@app.route('/save_preset', methods=['POST'])
+def save_preset():
+    if not request.is_json:
+        return jsonify({"message": "Bad request!"}), 400
+
+    data = request.get_json()
+    preset_name = data["name"]
+    resp = ptz_ctl.set_preset(preset_name)
+    if resp is not None:
+        return jsonify({"message": "OK"}), 200
+
+    return jsonify({"message": "Failed"}), 500
+
+@app.route('/get_preset', methods=['GET'])
+def get_preset():
+    preset_list = ptz_ctl.get_preset()
+    if not isinstance(preset_list, list):
+        return jsonify({"message": "Failed!"}), 500
+
+    resp_list = [i[1] for i in preset_list]
+    return jsonify({"preset_list": resp_list}), 200
+
+@app.route('/go_to_preset', methods=['POST'])
+def go_to_preset():
+    preset_name = request.args.get('name')
+    ptz_ctl.go_to_preset(preset_name)
+    return jsonify({"message": "OK"}), 200

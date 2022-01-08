@@ -64,10 +64,16 @@
                     <div class="card">
                         <div class="card-header text-blue font-weight-bold">
                             Preset list
+                            <div class="ms-auto text-muted">
+                                Search:
+                                <div class="ms-2 d-inline-block">
+                                    <input id="search-preset" type="text" class="form-control" aria-label="Search preset">
+                                </div>
+                            </div>
                         </div>
                         <div class="card-body">
-                            <div id="preset-list" class="form-selectgroup form-selectgroup-boxes d-flex flex-column"
-                            style="max-height: 30vh;overflow-y: scroll;">
+                            <div id="preset-list" class="form-selectgroup form-selectgroup-boxes d-flex flex-row"
+                            style="max-height: 30vh; min-height: 30vh; overflow-y: scroll;">
                             </div>
                         </div>
                     </div>
@@ -82,6 +88,7 @@
                                 <option value="con_move">Continouse move</option>
                                 <option value="abs_move">Absolute move</option>
                                 <option value="rel_move">Relative move</option>
+                                <option value="preset_tour">Preset tour</option>
                             </select>
                         </div>
                     </div>
@@ -156,6 +163,17 @@
                 </div>
                 <!-- End -->
                 <!-- End -->
+                <div class="w-100 move-div d-none" data-move="preset_tour">
+                    <div class="card-body">
+                        <div id="preset-tour" class="form-selectgroup form-selectgroup-boxes d-flex flex-row"
+                        style="min-height: 20vh;max-height: 20vh;overflow-y: scroll;">
+                        </div>
+                    </div>
+                    <div class="card-footer float-right">
+                        <button id="do_preset_tour" class="btn btn-primary" type="button">Preview</button>
+                        <button id="send_preset_tour" class="btn btn-secondary" type="button">Send to Nano</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

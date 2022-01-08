@@ -1,5 +1,12 @@
+# -*- coding: utf-8 -*-
+# @Author: Bao
+# @Date:   2022-01-03 08:51:16
+# @Last Modified by:   False
+# @Last Modified time: 2022-01-07 14:17:07
+
 ''' From: https://github.com/smartsenselab/sensecam-control '''
 import cv2
+import math
 import numpy as np
 from onvif import ONVIFCamera
 
@@ -8,7 +15,7 @@ class CameraControl:
     Module for control cameras AXIS using Onvif
     """
 
-    def __init__(self, ip, user, password, calibrate=False):
+    def __init__(self, ip, user, password, calibrate=True):
         self.__cam_ip = ip
         self.__cam_user = user
         self.__cam_password = password
@@ -24,8 +31,8 @@ class CameraControl:
 
             self.newcameramtx, _ = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, (640, 480), 1, (640, 480))
 
-        self.h_pov = 55 / 180 / 640
-        self.v_pov = 33 / 105 / 480
+        self.h_pov = 55 / 640
+        self.v_pov = 33 / 480 * (180 / 105)
 
     def camera_start(self):
         """
@@ -147,7 +154,10 @@ class CameraControl:
         move_p *= self.h_pov
         move_t *= self.v_pov
 
-        print("Move params: %s - %.2f - %.2f - %.2f - %.2f" %(str(in_point), x, y, move_p, move_t))
+        move_p = math.radians(move_p) / math.pi
+        move_t = math.radians(move_t) / math.pi
+
+        print("Move params: %.2f - %.2f - %.2f - %.2f" %(x, y, move_p, move_t))
         self.relative_move(move_p, move_t, 0)
 
     def get_cur_position(self):

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: Bao
 # @Date:   2021-08-20 09:21:34
-# @Last Modified by:   Bao
-# @Last Modified time: 2021-08-20 09:58:58
+# @Last Modified time: 2022-01-07 14:19:44
+
 import json
 import subprocess as sp
 from app import app
@@ -17,7 +17,8 @@ if __name__ == '__main__':
 	# Init FFMPEG player to convert RTSP stream to HLS
 	# https://girishjoshi.io/post/ffmpeg-rtsp-to-hls/
 	hls_dir = "app/static/hls/"
-	command = ['ffmpeg', '-fflags', 'nobuffer',
+	command = ['ffmpeg', '-threads', '4',
+			   '-fflags', 'nobuffer',
 			   '-rtsp_transport', 'udp',
 			   '-i', rtsp_str,
 			   '-vsync', '0',

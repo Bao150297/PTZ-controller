@@ -1,19 +1,88 @@
+/*
+* @Author: Bao
+* @Date:   2021-12-10 08:33:14
+* @Last Modified by:   dorihp
+* @Last Modified time: 2022-01-08 08:49:45
+*/
+
 $(document).ready(() => {
 
-    // add preset select tag
-    for(var i=0; i<300; i++){
-        var node = `<label class="form-selectgroup-item flex-fill">
-                        <input type="checkbox" name="form-project-manager[]" value="1" class="form-selectgroup-input" >
-                        <div class="form-selectgroup-label d-flex align-items-center p-3">
-                            <div class="form-selectgroup-label-content d-flex align-items-center">
-                                <div>
-                                    <div class="font-weight-medium">Preset ${i}</div>
+    // Allow camera go to the preset posititon
+    $("#preset-list").on("click", ".btn-go-preset", function(){ // Dynamic append event
+        axios.post(`/go_to_preset?name=${$(this).data("name")}`)
+    })
+
+    // Add up preset to queue
+    $("#preset-list").on("click", ".btn-add-ptour", function(){ // Dynamic append event
+        var preset_name = $(this).data("name")
+        var preset_opt = `<label class="preset-div form-selectgroup-item w-100">
+                                <input type="checkbox" name="form-project-manager[]" value="1" class="form-selectgroup-input" >
+                                <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <div class="form-selectgroup-label-content d-flex align-items-center">
+                                        <div class="mr-4">
+                                            <div class="font-weight-medium preset-name">${preset_name}</div>
+                                        </div>
+                                        <button class="btn btn-sm btn-danger btn-rm-preset btn-default mr-2" style="display: none;" data-name="${preset_name}">Remove</button>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </label>`
-        $("#preset-list").append(node)
+                            </label>`
+        $("#preset-tour").append(preset_opt)
+    })
+
+    // Assign self-remove action for preset in presettour
+    $("#preset-tour").on("click", ".btn-rm-preset", function(){
+        $(this).closest("label").remove()
+    })
+
+    // Do a preset tour
+    $("#do_preset_tour").off().on("click", function(event){
+        // List all presets currently stay in preset tour div
+        var all_preset = []
+        $("#preset-tour .preset-name").each(function(index, ele){
+            all_preset.push($(ele).text())
+        })
+        move_to_preset(all_preset)
+        // console.log(all_preset)
+    })
+
+    // Recusive go through all preset positions
+    function move_to_preset(preset_tour){
+        if(!preset_tour.length)
+            return
+        // Let's go
+        var des_preset = preset_tour[0]
+        axios.post(`/go_to_preset?name=${des_preset}`)
+        setTimeout(function(){
+            preset_tour = preset_tour.slice(1)
+            move_to_preset(preset_tour)
+        }, 6000)
     }
+
+    // add preset select tag
+    function load_preset(){
+        axios.get("/get_preset")
+        .then(function(response){
+            for(var i of response.data.preset_list){
+                var node = `<label class="preset-div form-selectgroup-item w-100">
+                                <input type="checkbox" name="form-project-manager[]" value="1" class="form-selectgroup-input" >
+                                <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <div class="form-selectgroup-label-content d-flex align-items-center">
+                                        <div class="mr-4">
+                                            <div class="font-weight-medium preset-name">${i}</div>
+                                        </div>
+                                        <button class="btn btn-sm btn-primary btn-go-preset btn-default mr-2" style="display: none;" data-name="${i}">Go</button>
+                                        <button class="btn btn-sm btn-secondary btn-add-ptour btn-default" style="display: none;" data-name="${i}">Add to tour</button>
+                                    </div>
+                                </div>
+                            </label>`
+                $("#preset-list").append(node)
+            }
+        }).catch(function(error){
+            alert("Failed to load preset list!")
+        })
+    }
+
+    load_preset()
 
     axios.get('/get_loc')
     .then(function(response){
@@ -252,7 +321,6 @@ $(document).ready(() => {
         }, 1000)
     }
 
-
     init()
 
     // Get location when click on canvas
@@ -279,7 +347,6 @@ $(document).ready(() => {
         })
     }
 
-
     function get_point_loc(canvas, event) {
         var x, y
 
@@ -289,5 +356,52 @@ $(document).ready(() => {
 
         return [x,y];
     }
+
+    // Save current position as a preset for moving after
+    $("#set_preset").off().on('click', function(event) {
+        event.preventDefault()
+        var preset_name = prompt("Enter this preset's name: ", "A name")
+        if(preset_name === null){
+            return
+        }
+        if(!preset_name){
+            alert("Cannot leave preset's name empty!")
+            return
+        }
+        axios.post("/save_preset", data={"name": preset_name})
+        .then((response) =>{
+            alert("Preset saved!")
+            // Reload preset list
+            $("#preset-list").empty()
+            load_preset()
+        })
+        .catch((error)=>{
+            alert(error.message)
+        })
+    })
+
+    $(document).on('mouseover', '.preset-div', function() {
+        $(this).find(".btn-go-preset").show()
+        $(this).find(".btn-add-ptour").show()
+        $(this).find(".btn-rm-preset").show()
+    }).on('mouseout',function(){
+        $(this).find(".btn-go-preset").hide()
+        $(this).find(".btn-add-ptour").hide()
+        $(this).find(".btn-rm-preset").hide()
+    })
+
+    // Searching for preset name
+    $("#search-preset").on("keyup", function() {
+        // Search device by serial number
+        var value = $(this).val()
+
+        $(".preset-div").each(function(index, ele) {
+            var row_text = $(ele).find(".preset-name").text()
+            if (!row_text.includes(value))
+                $(ele).hide()
+            else
+                $(ele).show()
+        })
+    })
 
 })
