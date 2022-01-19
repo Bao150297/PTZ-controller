@@ -7,6 +7,14 @@
     <link href="{{ url_for('static', filename='css/tabler.min.css')}}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css')}}" rel="stylesheet">
     <link href="http://vjs.zencdn.net/6.2.8/video-js.css" rel="stylesheet">
+    <script src="http://vjs.zencdn.net/6.2.8/video.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.15.0/videojs-contrib-hls.min.js"></script> -->
+    <script type="text/javascript" src="{{ url_for('static', filename='js/videojs-http-streaming.min.js')}}"></script>
+    <style>
+        body {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -14,8 +22,8 @@
             <div class="col-8 mt-3">
                 <div id="vid-container" style="position: relative; width: 600px; height: 450px;">
                     <video id="player" class="video-js vjs-default-skin vjs-big-play-centered"
-                    data-setup='{"fluid": true, "controls": false, "autoplay": true, "preload": "auto", "aspectRatio": "4:3"}' muted="muted">
-                        <source src="/video/index.m3u8" type="application/x-mpegURL">
+                    data-setup='{"fluid": true, "controls": false, "preload": "auto", "aspectRatio": "4:3"}' muted="muted">
+                        <!-- <source src="/video/index.m3u8" type="application/x-mpegURL"> -->
                     </video>
                 </div>
                 <div class="col-12 row mt-3" style="position: relative; width: 600px;">
@@ -23,7 +31,10 @@
                     <div class="col-12">
                         <div class="pt-1 pb-1 card-header d-flex text-center align-items-center justify-content-between">
                             <span>Current PTZ position</span>
-                            <button id="set_preset" type="button" class="btn btn-secondary" style="border-radius: 0 !important;">Save as preset</button>
+                            <button type="button" id="save_img" class="btn btn-secondary" style="border-radius: 0 !important;">
+                                <i class="fas fa-camera-retro mr-2"></i> Save image
+                            </button>
+                            <button id="set_preset" type="button" class="btn btn-primary" style="border-radius: 0 !important;">Save as preset</button>
                         </div>
                         <div class="pt-1 pb-1 card-body">
                             <div class="btn-group d-flex justify-content-between">
@@ -121,16 +132,16 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="form-group mb-2 d-flex flex-column">
-                                <label for="r1">Pan</label>
-                                <input id="r1" type="range" name="abs_pan" class="form-range" value="0" min="-1" max="1" step="0.1">
+                                <label for="r1">Pan: </label>
+                                <input id="r1" type="range" name="abs_pan" class="form-range" value="0" min="-1" max="1" step="0.01">
                             </div>
                             <div class="form-group mb-2 d-flex flex-column">
                                 <label for="r2">Tilt</label>
-                                <input id="r2" type="range" name="abs_tilt" class="form-range" value="0" min="-1" max="1" step="0.1">
+                                <input id="r2" type="range" name="abs_tilt" class="form-range" value="0" min="-1" max="1" step="0.01">
                             </div>
                             <div class="form-group mb-2 d-flex flex-column">
                                 <label for="r3">Zoom_x</label>
-                                <input id="r3" type="range" name="abs_zoom" class="form-range" value="0" min="0" max="1" step="0.1">
+                                <input id="r3" type="range" name="abs_zoom" class="form-range" value="0" min="0" max="1" step="0.01">
                             </div>
                         </div>
                         <div class="card-footer">
@@ -145,15 +156,15 @@
                         <div class="card-body">
                             <div class="form-group mb-2 d-flex flex-column">
                                 <label for="_r1">Pan</label>
-                                <input id="_r1" type="range" name="rel_pan" class="form-range" value="0" min="-1" max="1" step="0.1">
+                                <input id="_r1" type="range" name="rel_pan" class="form-range" value="0" min="-1" max="1" step="0.01">
                             </div>
                             <div class="form-group mb-2 d-flex flex-column">
                                 <label for="_r2">Tilt</label>
-                                <input id="_r2" type="range" name="rel_tilt" class="form-range" value="0" min="-1" max="1" step="0.1">
+                                <input id="_r2" type="range" name="rel_tilt" class="form-range" value="0" min="-1" max="1" step="0.01">
                             </div>
                             <div class="form-group mb-2 d-flex flex-column">
                                 <label for="_r3">Zoom</label>
-                                <input id="_r3" type="range" name="rel_zoom" class="form-range" value="0" min="-1" max="1" step="0.1">
+                                <input id="_r3" type="range" name="rel_zoom" class="form-range" value="0" min="-1" max="1" step="0.01">
                             </div>
                         </div>
                         <div class="card-footer">
@@ -164,26 +175,30 @@
                 <!-- End -->
                 <!-- End -->
                 <div class="w-100 move-div d-none" data-move="preset_tour">
-                    <div class="card-body">
-                        <div id="preset-tour" class="form-selectgroup form-selectgroup-boxes d-flex flex-row"
-                        style="min-height: 20vh;max-height: 20vh;overflow-y: scroll;">
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="preset-tour" class="form-selectgroup form-selectgroup-boxes d-flex flex-row"
+                            style="min-height: 20vh;max-height: 20vh;overflow-y: scroll;">
+                            </div>
                         </div>
-                    </div>
-                    <div class="card-footer float-right">
-                        <button id="do_preset_tour" class="btn btn-primary" type="button">Preview</button>
-                        <button id="send_preset_tour" class="btn btn-secondary" type="button">Send to Nano</button>
+                        <div class="card-footer float-right">
+                            <button id="do_preset_tour" class="btn btn-primary" type="button">Preview</button>
+                            <button id="send_preset_tour" class="btn btn-secondary" type="button">Send to Nano</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <script src="https://kit.fontawesome.com/b930081e53.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-    <script src="http://vjs.zencdn.net/6.2.8/video.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.12.2/videojs-contrib-hls.min.js"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/sweetalert2.all.min.js') }}" ></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/index.js')}}"></script>
+    <script>
+        document.body.style.display = "block"
+    </script>
 </body>
 </html>
