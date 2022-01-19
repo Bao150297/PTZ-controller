@@ -7,3 +7,10 @@ app/static/hls
 *.npz
 config.json
 test/*
+pyvenv.cfg
+share/*
+lib/*
+include/*
+bin/*
+etc/*
+lib64

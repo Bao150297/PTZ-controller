@@ -1,8 +1,8 @@
 /*
 * @Author: Bao
 * @Date:   2021-12-10 08:33:14
-* @Last Modified by:   dorihp
-* @Last Modified time: 2022-01-08 08:49:45
+* @Last Modified by:   ADMIN
+* @Last Modified time: 2022-01-19 10:28:48
 */
 
 $(document).ready(() => {
@@ -82,6 +82,15 @@ $(document).ready(() => {
         })
     }
 
+    var range_inputs = document.querySelectorAll('input[type=range]')
+    for (let i = 0; i < range_inputs.length; i++) {
+        range_inputs[i].addEventListener('input', function rangeChange() {
+            // trigger the CSS to update
+            // console.log(this.value)
+            this.setAttribute('value', this.value)
+        })
+    }
+
     load_preset()
 
     axios.get('/get_loc')
@@ -93,7 +102,16 @@ $(document).ready(() => {
     })
 
     var player = videojs('player')
+    // setTimeout(function(){
+    player.src({
+        src: "/video/index.m3u8",
+        type: 'application/x-mpegURL',
+        overrideNative: true
+    })
     player.play()
+    // }, 2000)
+
+    // player.play()
 
     // Event handle for select tag
     // Iterate over each select element
@@ -334,9 +352,7 @@ $(document).ready(() => {
 
         x *= scale_x
         y *= scale_y
-
-        console.log('scale_x', scale_x, 'scale_y', scale_y, 'x', x, 'y', y)
-
+        // console.log('scale_x', scale_x, 'scale_y', scale_y, 'x', x, 'y', y)
         axios.post(`/direct?t=rel_c`,
             data = {x: x, y: y},
             {headers:
@@ -404,4 +420,48 @@ $(document).ready(() => {
         })
     })
 
+    // Capture and save canvas frame as image
+    $('#save_img').off().on("click", function(e) {
+        var frame = captureVideoFrame('png')
+        var sc    = frame.data_uri
+        var a = document.createElement('a')
+        a.download = "screenshot.png"
+        a.href = sc
+        a.click()
+    })
+
+    function captureVideoFrame(format) {
+        var video = document.querySelector("#player video")
+
+        format = format || 'jpeg'
+
+        if (!video || (format !== 'png' && format !== 'jpeg')) {
+            return false
+        }
+
+        var _canvas = document.createElement("CANVAS")
+
+        _canvas.width = video.videoWidth
+        _canvas.height = video.videoHeight
+
+        _canvas.getContext('2d').drawImage(video, 0, 0, _canvas.width, _canvas.height)
+
+        // var _ctx = _canvas.getContext("2d")
+        // _ctx.drawImage(video.children_[0], 0, 0, canvas.width, canvas.height)
+
+        var data_uri = _canvas.toDataURL('image/' + format)
+        var data = data_uri.split(',')[1]
+        var mimeType = data_uri.split(';')[0].slice(5)
+
+        var bytes = window.atob(data)
+        var buf = new ArrayBuffer(bytes.length)
+        var arr = new Uint8Array(buf)
+
+        for (var i = 0; i < bytes.length; i++) {
+            arr[i] = bytes.charCodeAt(i)
+        }
+
+        var blob = new Blob([ arr ], { type: mimeType })
+        return { blob: blob, data_uri: data_uri, format: format }
+    }
 })

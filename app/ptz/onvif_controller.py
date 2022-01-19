@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 # @Author: Bao
 # @Date:   2022-01-03 08:51:16
-# @Last Modified by:   False
-# @Last Modified time: 2022-01-07 14:17:07
+# @Last Modified by:   ADMIN
+# @Last Modified time: 2022-01-19 09:02:13
 
-''' From: https://github.com/smartsenselab/sensecam-control '''
+'''
+PTZ controller put here
+Reference: https://github.com/smartsenselab/sensecam-control
+'''
+
 import cv2
 import math
 import numpy as np
@@ -12,7 +16,7 @@ from onvif import ONVIFCamera
 
 class CameraControl:
     """
-    Module for control cameras AXIS using Onvif
+    Module for control cameras using Onvif
     """
 
     def __init__(self, ip, user, password, calibrate=True):
@@ -142,9 +146,10 @@ class CameraControl:
         return resp
 
     def point_move(self, x, y):
+        x, y = round(x), round(y)
         """ Provide x, y coordinate on image, center image to this point """
         if self.calibrate:
-            in_point = np.expand_dims(np.asarray((x, y), dtype=np.float32), axis=0)
+            in_point = np.asarray((x, y), dtype=np.float).reshape(1, 2)
             out_point = cv2.undistortPoints(in_point, self.mtx, self.dist, P=self.newcameramtx)
             x, y = out_point[0][0]
 
@@ -154,10 +159,16 @@ class CameraControl:
         move_p *= self.h_pov
         move_t *= self.v_pov
 
-        move_p = math.radians(move_p) / math.pi
-        move_t = math.radians(move_t) / math.pi
+        move_p = math.radians(move_p)
+        move_t = math.radians(move_t)
+        print("move_p, move_t: ", move_p, move_t)
 
-        print("Move params: %.2f - %.2f - %.2f - %.2f" %(x, y, move_p, move_t))
+        # move_p = round(move_p / math.pi, 5)
+        # move_t = round(move_t / math.pi, 5)
+        move_p = round(move_p * 0.34632, 5)
+        move_t = round(move_t * 0.31831, 5)
+
+        print("Move params: %d - %d - %.5f - %.5f" %(x, y, move_p, move_t))
         self.relative_move(move_p, move_t, 0)
 
     def get_cur_position(self):
@@ -322,5 +333,5 @@ class CameraControl:
                 resp = self.camera_ptz.GotoPreset(request)
                 print("Goes to (\'%s\')" %preset_position)
                 return resp
-        print("Preset (\'%s\') not found!", preset_position)
+        print("Preset (\'%s\') not found!" %preset_position)
         return None
