@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Author: Bao
 # @Date:   2021-08-20 09:21:34
-# @Last Modified time: 2022-01-19 09:03:35
+# @Last Modified time: 2022-01-20 09:11:21
 import json
 import subprocess as sp
 from app import app
@@ -70,8 +70,7 @@ if __name__ == '__main__':
 				   '!', 'hlssink',
 				   'location=%s' %hls_dir,
 				   'max-files=60',
-				   'target-duration=5'
-				   ]
+				   'target-duration=5']
 
-	proc = sp.Popen(command, stdout=sp.DEVNULL, stderr=sp.STDOUT)
-	app.run(host="0.0.0.0", port=5000, debug=True)
+	proc = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
+	app.run(host="0.0.0.0", port=5000, debug=False)

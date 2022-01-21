@@ -2,7 +2,7 @@
 * @Author: Bao
 * @Date:   2021-12-10 08:33:14
 * @Last Modified by:   ADMIN
-* @Last Modified time: 2022-01-19 10:28:48
+* @Last Modified time: 2022-01-21 08:39:07
 */
 
 $(document).ready(() => {
@@ -106,7 +106,29 @@ $(document).ready(() => {
     player.src({
         src: "/video/index.m3u8",
         type: 'application/x-mpegURL',
-        overrideNative: true
+        overrideNative: true,
+        smoothQualityChange: true,
+        enableLowInitialPlaylist: true
+
+    })
+    player.reloadSourceOnError({
+
+        // getSource allows you to override the source object used when an error occurs
+        getSource: function(reload) {
+            console.log('Reloading player...')
+
+            // call reload() with a fresh source object
+            // you can do this step asynchronously if you want (but the error dialog will
+            // show up while you're waiting)
+            reload({
+                    src: '/video/index.m3u8',
+                    type: 'application/x-mpegURL'
+                });
+        },
+
+        // errorInterval specifies the minimum amount of seconds that must pass before
+        // another reload will be attempted
+        errorInterval: 5
     })
     player.play()
     // }, 2000)
