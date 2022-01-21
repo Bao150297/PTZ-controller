@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 # @Author: Bao
 # @Date:   2021-08-20 09:21:34
-# @Last Modified time: 2022-01-20 09:11:21
+# @Last Modified time: 2022-01-21 09:31:50
+import sys
 import json
-import subprocess as sp
-from app import app
 import argparse
+import subprocess as sp
+
+from app import app
 
 def get_parser():
 	parser = argparse.ArgumentParser('PTZ-controller')
@@ -37,17 +39,17 @@ if __name__ == '__main__':
 		# Init FFMPEG player to convert RTSP stream to HLS
 		# https://girishjoshi.io/post/ffmpeg-rtsp-to-hls/
 		command = ['ffmpeg', '-threads', '4',
-				   '-fflags', 'nobuffer',
 				   '-rtsp_transport', 'udp',
 				   '-i', rtsp_str,
-				   '-vsync', '0',
-				   '-copyts',
-				   '-vcodec', "copy",
-				   '-movflags', 'frag_keyframe+empty_moov',
+				   '-c:v', 'libx264',
+				   '-x264opts', 'keyint=30:min-keyint=30:scenecut=-1',
+				   '-tune', "zerolatency",
+				   '-deadline', 'realtime',
+				   '-b:v', '1400k',
+				   '-bufsize', '1400k',
 				   '-an',
 				   '-hls_flags', 'delete_segments+append_list',
 				   '-f', 'segment',
-				   '-reset_timestamps', '1',
 				   '-segment_wrap', '60',
 				   '-segment_list_flags', 'live',
 				   '-segment_time', '0.5',
@@ -72,5 +74,5 @@ if __name__ == '__main__':
 				   'max-files=60',
 				   'target-duration=5']
 
-	proc = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
+	proc = sp.Popen(command, stdout=sp.DEVNULL, stderr=sp.PIPE)
 	app.run(host="0.0.0.0", port=5000, debug=False)
